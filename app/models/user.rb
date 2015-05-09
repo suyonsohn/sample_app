@@ -1,4 +1,8 @@
 class User < ActiveRecord::Base
+
+  # Use callback to standardize on all lower-case addresses
+  # self.email = self.email.downcase OR
+  # self.email = email.downcase 
   before_save { email.downcase! }
 
   validates :name, presence: true, length: { maximum: 50 }
@@ -13,5 +17,17 @@ class User < ActiveRecord::Base
   def User.digest(string)
     cost = ActiveModel::SecurePassword.min_cost ? BCrypt::Engine::MIN_COST : BCrypt::Engine.cost
     BCrypt::Password.create(string, cost: cost)
+  end
+
+  # Returns a random token.
+  def User.new_token
+    # http://ruby-doc.org/stdlib-2.1.0/libdoc/securerandom/rdoc/SecureRandom.html
+    SecureRandom.urlsafe_base64
+  end
+
+  # Remembers a user in the database for use in persistent sessions.
+  def remember
+    self.remember_token = User.new_token
+    update_attribute(:remember_digest, User.digest(remember_token))
   end
 end
